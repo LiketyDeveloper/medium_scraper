@@ -1,12 +1,15 @@
-
+"""
+The file, that contains User Interface code on tkinter
+"""
 import os
 from datetime import datetime
 import json
 
 from typing import Dict
 
+
 import tkinter as tk
-from tkinter import filedialog, messagebox
+from tkinter import filedialog
 from abc import ABC, abstractmethod
 
 class AppWindow(ABC):
@@ -21,13 +24,15 @@ class AppWindow(ABC):
         self.root.resizable(width=False, height=False)
         self.root.protocol("WM_DELETE_WINDOW", self.on_closing)
         
+        self.root.iconbitmap('static\icon.ico')
+        
         self.left_frame = tk.Frame(self.root, padx=10, pady=10)
         self.left_frame.pack(side=tk.LEFT, fill=tk.BOTH)
 
         self.right_frame = tk.Frame(self.root, padx=10, pady=10)
         self.right_frame.pack(side=tk.RIGHT, fill=tk.BOTH, expand=True)
         
-        self._proxy = self._create_labeled_entry("Прокси:", "Введите прокси:", entry_name="proxy") 
+        self._proxy = self._create_labeled_entry("Прокси:", "Введите прокси: логин:пароль@хост:порт", entry_name="proxy") 
         self._email = self._create_labeled_entry("Почта:", "Введите почту:", entry_name="email")   
         self._password = self._create_labeled_entry("Пароль:", "Введите пароль:", show='*', entry_name="password")
         self._link = self._create_labeled_entry("Ссылка:", "Введите ссылку:")
@@ -45,7 +50,6 @@ class AppWindow(ABC):
         self._add_button(text="Проставить лайки", command=self.start_liking)
                 
         self._add_log_window()
-    
     
     
     @abstractmethod

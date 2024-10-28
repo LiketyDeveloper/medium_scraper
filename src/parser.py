@@ -3,8 +3,6 @@ import os
 import re
 import csv
 import time
-from pprint import pprint
-
 from typing import Dict, Callable, Optional
 
 import imaplib
@@ -37,14 +35,31 @@ class MediumParser:
         self._is_logged = False
         self.log = log_func or print
         
+        self._show_window = show_window
+        
         self._driver = None
         self._proxy_config = None
         
         self.log("[SUCCESS] Parser successfully initialized")
         
     
-    def initialize_driver(self, proxies: Dict[str, str] = None):
+    def initialize_driver(self, proxies: Dict[str, str]):
+        """
+        Initialize a new instance of the webdriver.
+
+        If the proxy configuration differs from the previous one, a new
+        instance of the webdriver is created and the old one is closed.
+
+        Args:
+            proxies (Dict[str, str]): The proxy configuration to use.
+        """
+        if not self.driver:
+            self._driver = uc.Chrome(
+                headless=not self._show_window,
+                options=self._get_options(proxies=self._proxy_config)
+            )
         if self._proxy_config != proxies:
+            self.log("[INFO] Initializing new driver")
             self._proxy_config = proxies
 
             if self._driver is not None:
@@ -52,7 +67,7 @@ class MediumParser:
                 self._driver.quit()
             
             self._driver = uc.Chrome(
-                use_subprocess=False,
+                headless=not self._show_window,
                 options=self._get_options(proxies=self._proxy_config)
             )
         
@@ -372,10 +387,6 @@ chrome.webRequest.onAuthRequired.addListener(
             'captchaValue': None,
         }
         
-        # pprint(headers)
-        # pprint(proxies)
-        # pprint(cookies)
-        
         self.log("[INFO] Trying to login...")
         response = requests.post(
             'https://medium.com/_/graphql', 
@@ -468,7 +479,6 @@ chrome.webRequest.onAuthRequired.addListener(
             link (str): The URL of the webpage to load.
             timeout (int, optional): The timeout in seconds. Defaults to 30.
         """
-        self.driver.find_element
         if not isinstance(link, str) and isinstance(timeout, int):
             self.log(f"[ERROR] parser._load_page: Link must be a string and timout must be an integer")
         if not link.startswith("http"):

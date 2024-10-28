@@ -15,8 +15,7 @@ class App(AppWindow):
         super().__init__()
         self.parser = MediumParser(
             app=self,
-            log_func=self.log,
-            show_window=True
+            log_func=self.log
         )
         self.start()
         
@@ -29,24 +28,28 @@ class App(AppWindow):
     
     
     def parse_users(self) -> None:
-        start = time.time()
-        self.parser.initialize_driver(
-            proxies=self.proxy
-        )
-        file_path = os.path.join(self.save_directory, f"output_{datetime.now().strftime(r'%Y-%m-%d_%H-%M')}.csv")
+        try:
+            start = time.time()
+            self.parser.initialize_driver(
+                proxies=self.proxy
+            )
+            file_path = os.path.join(self.save_directory, f"output_{datetime.now().strftime(r'%Y-%m-%d_%H-%M')}.csv")
             
-        with open(file_path, 'w', newline='') as output_file:
-            fieldnames = ["profile_link", "posts"]
-            dict_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
-            dict_writer.writeheader()
-            
-            
-            users = self.parser.fetch_users_who_liked_post(self.link)
-            for user in users:
-                dict_writer.writerows([user])
+            with open(file_path, 'w', newline='') as output_file:
+                fieldnames = ["profile_link", "posts"]
+                dict_writer = csv.DictWriter(output_file, fieldnames=fieldnames)
+                dict_writer.writeheader()
                 
-        end = time.time()
-        self.log(f"[SUCCESS] {len(users)} users collected. Took {(end-start):.2f} seconds, saved to {file_path}")
+                
+                users = self.parser.fetch_users_who_liked_post(self.link)
+                for user in users:
+                    dict_writer.writerows([user])
+                    
+            end = time.time()
+            self.log(f"[SUCCESS] {len(users)} users collected. Took {(end-start):.2f} seconds, saved to {file_path}")
+        
+        except Exception as e:
+            self.log(f"[ERROR] {e}")
     
     
     def start_liking(self):
@@ -57,13 +60,17 @@ class App(AppWindow):
             
         
     def like_users(self):
-        start = time.time()
-        self.parser.initialize_driver(
-            proxies=self.proxy
-        )
-        self.parser.like_users(self.read_file)
-        end = time.time()
-        self.log(f"[SUCCESS] All users are liked. Took {(end-start):.2f} seconds")
+        try:
+            start = time.time()
+            self.parser.initialize_driver(
+                proxies=self.proxy
+            )
+            self.parser.like_users(self.read_file)
+            end = time.time()
+            self.log(f"[SUCCESS] All users are liked. Took {(end-start):.2f} seconds")
+        
+        except Exception as e:
+            self.log(f"[ERROR] {e}")
     
     def on_closing(self):
         del self.parser
