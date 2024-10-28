@@ -23,7 +23,7 @@ from selenium.common.exceptions import TimeoutException
 
 class MediumParser:
 
-    def __init__(self, log_func: Callable[..., None] = None, show_window: bool = False) -> None:
+    def __init__(self, app, log_func: Callable[..., None] = None, show_window: bool = False) -> None:
         """
         Initialize the MediumParser instance.
 
@@ -32,23 +32,30 @@ class MediumParser:
             show_window (bool, optional): Whether to display the browser window. Defaults to False.
         """
         
+        self.app = app
+
         self._is_logged = False
         self.log = log_func or print
         
-        # TODO
-        self.proxy_config = {
-            "login": "PCPErW", 
-            "password": "8f3z1e", 
-            "host": "191.102.147.183", 
-            "port": "8000"
-        }
-        
-        self._driver = uc.Chrome(
-            use_subprocess=False,
-            options=self._get_options(proxy=self.proxy_config),
-        )
+        self._driver = None
+        self._proxy_config = None
         
         self.log("[SUCCESS] Parser successfully initialized")
+        
+    
+    def initialize_driver(self, proxies: Dict[str, str] = None):
+        if self._proxy_config != proxies:
+            self._proxy_config = proxies
+
+            if self._driver is not None:
+                self._driver.close()
+                self._driver.quit()
+            
+            self._driver = uc.Chrome(
+                use_subprocess=False,
+                options=self._get_options(proxies=self._proxy_config)
+            )
+        
         
         
     @property
@@ -57,7 +64,7 @@ class MediumParser:
         return self._driver
     
     
-    def _get_options(self, proxy: Dict[str, str] = None) -> uc.ChromeOptions:  
+    def _get_options(self, proxies: Dict[str, str] = None) -> uc.ChromeOptions:  
         """
         Configure Chrome options for the webdriver.
 
@@ -71,10 +78,10 @@ class MediumParser:
         """
         chrome_options = uc.ChromeOptions()
         
-        if proxy:
+        if proxies:
             fields = ["host", "port", "login", "password"]
             
-            if not all(key in proxy for key in fields):
+            if not all(key in proxies for key in fields):
                 raise ValueError("Proxy must contain all of the following fields: host, port, login, password")
             
             self.log("Loading extension for proxy")
@@ -133,7 +140,7 @@ chrome.webRequest.onAuthRequired.addListener(
     { urls: ["<all_urls>"] },
     ['blocking']
 );
-""" % (proxy["host"], proxy["port"], proxy["login"], proxy["password"])
+""" % (proxies["host"], proxies["port"], proxies["login"], proxies["password"])
             
             proxy_folder = os.path.join(os.path.dirname(__file__), "proxy_auth_plugin")
             
@@ -214,7 +221,7 @@ chrome.webRequest.onAuthRequired.addListener(
         Returns:
             Dict[str, str]: A dictionary containing the proxy settings formatted for use with requests.
         """
-        proxy =  f'http://{self.proxy_config["login"]}:{self.proxy_config["password"]}@{self.proxy_config["host"]}:{self.proxy_config["port"]}'
+        proxy =  f'http://{self._proxy_config["login"]}:{self._proxy_config["password"]}@{self._proxy_config["host"]}:{self._proxy_config["port"]}'
         proxies = {
             "http": proxy,
             "https": proxy
@@ -357,7 +364,7 @@ chrome.webRequest.onAuthRequired.addListener(
         # cookies = {}
         
         variables = {
-            'email': "ivanscrebtsoff@gmail.com",    # TODO
+            'email': self.app.email,
             'operation': 'login',
             'redirect': 'https://medium.com/?source=login-------------------------------------',
             'type': 'DEFAULT_MAGIC_LINK',
@@ -419,7 +426,8 @@ chrome.webRequest.onAuthRequired.addListener(
         
         with open(from_file, 'r') as f:
             reader = csv.DictReader(f)
-            for row in reader:
+            
+            for i, row in enumerate(reader):
                 user_link = row["profile_link"]
                 posts = json.loads(row["posts"])
                 
@@ -446,7 +454,7 @@ chrome.webRequest.onAuthRequired.addListener(
                     )
                     
                     if response.ok:
-                        self.log(f"[SUCCESS<{response.status_code}>] liked {user_link}, {post['url']}")
+                        self.log(f"[SUCCESS][{i}] liked {user_link}")
                         break
                     else:
                         self.log(f"[ERROR] Couldn't like {user_link}: {response}, trying again...")
@@ -493,7 +501,7 @@ chrome.webRequest.onAuthRequired.addListener(
         
         # Create server and login
         mail = imaplib.IMAP4_SSL("imap.gmail.com")
-        mail.login("ivanscrebtsoff@gmail.com", "swdh zumi fphp snly")  # TODO
+        mail.login(self.app.email, self.app.password)
 
         # Selecting the email
         mail.select('INBOX')
@@ -545,10 +553,11 @@ chrome.webRequest.onAuthRequired.addListener(
 
         mail.close()
         mail.logout()
-            
+        
 
     def __del__(self):
-        self._driver.close()
-        self._driver.quit()
-        self.log("[SUCCESS] Web-driver successfully closed")
+        if self.driver:
+            self._driver.close()
+            self._driver.quit()
+            self.log("[SUCCESS] Web-driver successfully closed")
     

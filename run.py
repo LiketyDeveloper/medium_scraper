@@ -1,14 +1,7 @@
-from src.ui import AppWindow
-from src.parser import MediumParser
-from datetime import datetime
-import csv
-import time
-
-from pprint import pprint
+from src import App
 
 def main():
-    app = AppWindow()
-    app.start()
+    app = App()
     
     # parser = MediumParser()
     # link = "https://medium.com/gitconnected/13-python-command-line-things-i-regret-not-knowing-earlier-aa92a5fe314e"
@@ -29,6 +22,6 @@ def main():
     #     print(f"[SUCCESS] {len(users)} пользователей собрано. Заняло {(end-start):.2f} секунд, сохранено {file_path}")
     
     # parser.like_users("data\\output_2024-10-28_02-11.csv")
-    
+    # http://PCPErW:8f3z1e@191.102.147.183:8000
 if __name__ == "__main__":
     main()
