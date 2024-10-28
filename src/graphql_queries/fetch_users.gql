@@ -1,0 +1,36 @@
+query PostVotersDialogQuery($postId: ID!, $pagingOptions: PagingOptions) {
+    post(id: $postId) {
+        title
+        voterCount
+        voters(paging: $pagingOptions) {
+                items {
+                    user {
+                        username
+                        name
+                        ...userUrl_user
+                    }
+                }
+                pagingInfo {
+                    next {
+                        page
+                    }
+                }
+            }
+        }
+}
+
+fragment userUrl_user on User {
+    customDomainState {
+        live {
+            domain
+        }
+    }
+    homepagePostsConnection {
+        posts {
+            id
+            mediumUrl
+        }
+    }
+    hasSubdomain
+    username
+}

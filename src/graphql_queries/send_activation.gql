@@ -1,0 +1,35 @@
+mutation SendAcctAuthEmail(
+    $email: String!, 
+    $redirect: String, 
+    $fullName: String, 
+    $captchaValue: String, 
+    $operation: String, 
+    $type: AuthEmailFlowType
+    ) {
+        sendAcctAuthEmail(
+            email: $email,
+            redirect: $redirect,
+            fullName: $fullName,
+            captchaValue: $captchaValue,
+            operation: $operation,
+            type: $type
+        ) {
+            ... on SusiMethod {
+                value
+                __typename
+            }
+            ... on BadRequest {
+                message
+                __typename
+            }
+            ... on FailedChallenge {
+                message
+                __typename
+            }
+            ... on NotFound {
+                message
+                __typename
+            }
+        __typename
+    }
+}

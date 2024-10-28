@@ -1,0 +1,28 @@
+mutation ClapMutation($targetPostId: ID!, $userId: ID!, $numClaps: Int!) {
+    clap(targetPostId: $targetPostId, userId: $userId, numClaps: $numClaps) {
+        viewerEdge {
+        ...ClapMutation_viewerEdge
+        __typename
+        }
+        ...ClapMutation_post
+        __typename
+    }
+}
+
+fragment ClapMutation_viewerEdge on PostViewerEdge {
+    __typename
+    id
+    clapCount
+}
+
+fragment ClapMutation_post on Post {
+    __typename
+    id
+    clapCount
+    ...MultiVoteCount_post
+}
+
+fragment MultiVoteCount_post on Post {
+    id
+    __typename
+}
